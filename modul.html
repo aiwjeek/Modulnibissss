@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VGA TECH</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        #000000,
+        #000000 10px,
+        #111111 10px,
+        #111111 20px
+      );
+      color: #00ff00;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      height: 100vh;
+    }
+    h1 {
+      color: #00ccff;
+      text-shadow: 0 0 5px #00ccff, 0 0 10px #00ccff;
+      margin-bottom: 10px;
+    }
+    #login, #player {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+    }
+    #login.active, #player.active { display: flex; }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #00ff00;
+      border-radius: 6px;
+      background: #000;
+      color: #00ff00;
+      margin-bottom: 10px;
+      width: 250px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: 2px solid #00ff00;
+      background: #000;
+      color: #00ff00;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .lcd {
+      width: 360px;
+      height: 60px;
+      background: #000;
+      border: 2px solid #00ff00;
+      border-radius: 8px;
+      box-shadow: inset 0 0 15px #00ff00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px 0;
+      font-size: 18px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .controls, .speed-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .file-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .file-inputs label {
+      color: #00ff00;
+      font-size: 14px;
+      border-top: 1px solid #00ff00;
+      padding-top: 6px;
+    }
+    .file-inputs input {
+      border: 1px solid #00ff00;
+      background: #000;
+      color: #00ff00;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    audio { display: none; }
+    .whatsapp-link {
+      margin-top: 10px;
+      color: #00ff00;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>VGA TECH</h1>
+
+  <div id="login" class="active">
+    <h2>MASUKKAN VOUCHER</h2>
+    <input type="text" id="voucherInput" placeholder="Masukkan kode voucher">
+    <button onclick="login()">Masuk</button>
+    <div id="expiredNotice" style="color:red; display:none;">VOUCHER SUDAH KADALUARSA</div>
+    <div id="error" style="color:red;"></div>
+    <a class="whatsapp-link" href="https://wa.me/6288290755733" target="_blank">BELI VOUCHER DI NOMOR INI : 088290755733</a>
+  </div>
+
+  <div id="player">
+    <h2 id="sceneInfo"></h2>
+    <div class="lcd" id="lcdDisplay" onclick="renameAudio()">Tidak ada audio</div>
+    <div class="controls">
+      <button onclick="prevScene()"><span>&#9664;</span> Prev</button>
+      <button onclick="playAudio()">&#9654; Play</button>
+      <button onclick="stopAudio()">&#9632; Stop</button>
+      <button onclick="nextScene()">Next <span>&#9654;</span></button>
+    </div>
+    <div class="speed-controls">
+      <button onclick="slower()">- Speed</button>
+      <button onclick="faster()">+ Speed</button>
+    </div>
+    <div class="file-inputs">
+      <label for="bgInput">GANTI BACKGROUND</label>
+      <input type="file" id="bgInput">
+      <label for="audioInput">PILIH BASURI DARI FILE ANDA</label>
+      <input type="file" id="audioInput">
+    </div>
+    <audio id="audioPlayer"></audio>
+  </div>
+
+  <script>
+    const validVouchers = ["X8K9J2", "MZ47KL", "D91QLT", "WZ83NE", "A72JKL", "Q19LXP", "BZ47KU", "C39NLE", "ZK81MO", "Y18WPL",
+      "NX29TR", "LK73QZ", "DV28HM", "UI47EP", "WP19LX", "BT48QL", "ME28XK", "VN39LU", "PT28NM", "AR48YX",
+      "KJ38PL", "RE49XM", "QK37LY", "XL20NP", "CW49ZX", "LK92TP", "UZ38NP", "KP48XM", "NX29LP", "HJ47XM",
+      "TA38LK", "GE47KP", "QT92LP", "MB18KL", "RX37NM", "VP29XL", "ZY38LP", "WL28XP", "QA47KM", "JZ39PL",
+      "EZ28LK", "NK37PU", "TZ19LP", "YX48KM", "PL28XO", "MN37QP", "ZR19LX", "DW28XM", "GL47NL", "TR38XP"];
+
+    const totalScenes = 200;
+    let currentScene = 1;
+    let playbackRate = 1.0;
+    const audioPlayer = document.getElementById("audioPlayer");
+    const lcd = document.getElementById("lcdDisplay");
+
+    // Data per scene
+    let scenes = {};
+    for (let i = 1; i <= totalScenes; i++) scenes[i] = { audio: null, name: null };
+
+    function login() {
+      const code = document.getElementById("voucherInput").value.trim();
+      const expiry = localStorage.getItem("voucher_expiry");
+      const now = Date.now();
+
+      if (expiry && now < parseInt(expiry)) return showPlayer();
+
+      if (validVouchers.includes(code)) {
+        const newExpiry = now + 7 * 24 * 60 * 60 * 1000;
+        localStorage.setItem("voucher_expiry", newExpiry);
+        showPlayer();
+      } else {
+        document.getElementById("error").textContent = "Voucher tidak valid!";
+      }
+    }
+
+    function showPlayer() {
+      document.getElementById("login").classList.remove("active");
+      document.getElementById("player").classList.add("active");
+      updateScene();
+    }
+
+    function updateScene() {
+      document.getElementById("sceneInfo").textContent = `NOMOR : ${currentScene} - ${totalScenes}`;
+      lcd.textContent = scenes[currentScene].name || "Tidak ada audio";
+    }
+
+    function showTempLCD(text) {
+      lcd.textContent = text;
+      setTimeout(() => updateScene(), 500);
+    }
+
+    function playAudio() {
+      const scene = scenes[currentScene];
+      if (scene.audio) {
+        audioPlayer.src = scene.audio;
+        audioPlayer.playbackRate = playbackRate;
+        audioPlayer.play();
+        showTempLCD("Play");
+      }
+    }
+
+    function stopAudio() {
+      audioPlayer.pause();
+      showTempLCD("Stop");
+    }
+
+    function nextScene() {
+      currentScene = currentScene % totalScenes + 1;
+      showTempLCD(`${currentScene} >`);
+    }
+
+    function prevScene() {
+      currentScene = (currentScene - 2 + totalScenes) % totalScenes + 1;
+      showTempLCD(`< ${currentScene}`);
+    }
+
+    function slower() {
+      playbackRate = Math.max(0.5, playbackRate - 0.1);
+      audioPlayer.playbackRate = playbackRate;
+      showTempLCD("- Speed");
+    }
+
+    function faster() {
+      playbackRate = Math.min(2.0, playbackRate + 0.1);
+      audioPlayer.playbackRate = playbackRate;
+      showTempLCD("+ Speed");
+    }
+
+    function renameAudio() {
+      const newName = prompt("Ganti nama audio:", scenes[currentScene].name || "");
+      if (newName !== null) {
+        scenes[currentScene].name = newName.slice(0, 30);
+        updateScene();
+      }
+    }
+
+    document.getElementById("bgInput").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        document.body.style.backgroundImage = `url('${url}')`;
+      }
+    });
+
+    document.getElementById("audioInput").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        scenes[currentScene].audio = url;
+        scenes[currentScene].name = file.name;
+        updateScene();
+      }
+    });
+
+    if (localStorage.getItem("voucher_expiry") && Date.now() < parseInt(localStorage.getItem("voucher_expiry"))) {
+      showPlayer();
+    }
+  </script>
+</body>
+</html>
