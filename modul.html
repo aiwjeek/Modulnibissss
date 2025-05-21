@@ -11,7 +11,7 @@
     }
     body {
       margin: 0;
-      padding: 0;
+      padding: 10px;
       background: repeating-linear-gradient(45deg, #000, #000 10px, #111 10px, #111 20px);
       color: #00ff00;
       font-family: 'Share Tech Mono', monospace;
@@ -21,7 +21,7 @@
       justify-content: flex-start;
       height: 100vh;
       width: 100vw;
-      border: 4px solid #00ff00;
+      border: 4px solid #00bfff;
       overflow-x: hidden;
       position: relative;
     }
@@ -52,7 +52,7 @@
     input[type="text"], input[type="file"] {
       padding: 2.5vw;
       font-size: 4vw;
-      border: 2px solid #00ff00;
+      border: 2px solid #00bfff;
       border-radius: 8px;
       background: #000;
       color: #00ff00;
@@ -62,7 +62,7 @@
     button {
       padding: 2.5vw 5vw;
       font-size: 4vw;
-      border: 2px solid #00ff00;
+      border: 2px solid #00bfff;
       background: #000;
       color: #00ff00;
       border-radius: 8px;
@@ -73,9 +73,9 @@
       width: 90%;
       height: 12vw;
       background: #000;
-      border: 2px solid #00ff00;
+      border: 2px solid #00bfff;
       border-radius: 8px;
-      box-shadow: inset 0 0 15px #00ff00;
+      box-shadow: inset 0 0 15px #00bfff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -105,7 +105,7 @@
     }
     .file-inputs label {
       font-size: 3.5vw;
-      border-top: 1px solid #00ff00;
+      border-top: 1px solid #00bfff;
       padding-top: 6px;
       color: #00ff00;
       margin-bottom: 5px;
@@ -121,23 +121,27 @@
       font-size: 3.5vw;
       padding: 1vw 2vw;
       z-index: 1000;
+      border: 2px solid #00bfff;
+      background: #000;
+      color: #00ff00;
+      border-radius: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <h1>VGA TECH</h1>
 
-  <button id="totalListBtn" onclick="showTotalList()">TOTAL LIST</button>
-
   <div id="login" class="active">
     <h2>MASUKKAN VOUCHER</h2>
-    <input type="text" id="voucherInput" placeholder="Masukkan kode voucher">
+    <input type="text" id="voucherInput" placeholder="Masukkan kode voucher" />
     <button onclick="login()">Masuk</button>
     <div id="expiredNotice" style="color:red; display:none;">VOUCHER SUDAH KADALUARSA</div>
     <div id="error" style="color:red;"></div>
   </div>
 
   <div id="player">
+    <button id="totalListBtn" onclick="showTotalList()">TOTAL LIST</button>
     <h2 id="sceneInfo"></h2>
     <div class="lcd" id="lcdDisplay" onclick="renameAudio(event)">Tidak ada audio</div>
     <div class="controls">
@@ -152,9 +156,9 @@
     </div>
     <div class="file-inputs">
       <label for="bgInput">GANTI BACKGROUND</label>
-      <input type="file" id="bgInput">
+      <input type="file" id="bgInput" />
       <label for="audioInput">PILIH BASURI DARI FILE ANDA</label>
-      <input type="file" id="audioInput">
+      <input type="file" id="audioInput" />
     </div>
     <audio id="audioPlayer"></audio>
   </div>
@@ -173,7 +177,6 @@
     let currentScene = 1;
     let playbackRate = 1.0;
     let scenes = {};
-
     const dbName = "VGA_DB";
     let db;
 
@@ -230,9 +233,7 @@
       const code = document.getElementById("voucherInput").value.trim();
       const expiry = localStorage.getItem("voucher_expiry");
       const now = Date.now();
-
       if (expiry && now < parseInt(expiry)) return showPlayer();
-
       if (validVouchers.includes(code)) {
         const newExpiry = now + 7 * 24 * 60 * 60 * 1000;
         localStorage.setItem("voucher_expiry", newExpiry);
@@ -362,4 +363,4 @@
     };
   </script>
 </body>
-        </html>
+</html>
